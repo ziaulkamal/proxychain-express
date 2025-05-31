@@ -15,16 +15,17 @@ exports.getTargetDomain = (req) => {
 };
 
 exports.resolveTargetFromHost = (hostname, mainHost) => {
-  // Jika sama dengan host utama → gunakan ROOT_TARGET
-  if (hostname === mainHost || hostname === 'localhost') return null;
+  // Ex: www-matamata-com.ziadns.my.id
+  if (!hostname.endsWith(mainHost)) return null;
 
-  // Ambil subdomain
-  const subdomain = hostname.replace(`.${mainHost}`, '');
+  const subdomainPart = hostname.replace(`.${mainHost}`, '');
 
-  // Reverse: www-matamata-com => www.matamata.com
-  const reversed = subdomain.replace(/-/g, '.');
+  if (!subdomainPart || subdomainPart === 'www') return null;
 
-  // Validasi URL minimal
+  // Reverse - to .
+  const reversed = subdomainPart.replace(/-/g, '.');
+
+  // Minimal valid domain check
   if (!reversed.includes('.')) return null;
 
   return `https://${reversed}`;
