@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  seo-proxy:
+    build: .
+    container_name: seo-proxy
+    ports:
+      - "10223:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - HOST=ziadns.my.id
+      - ROOT_TARGET=https://www.suara.com
+    command: npm run dev

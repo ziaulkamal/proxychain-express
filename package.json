@@ -1,0 +1,31 @@
+{
+  "name": "seo-proxy-cloner",
+  "version": "1.0.0",
+  "description": "A Node.js-based content cloning proxy with SEO-focused URL rewriting and whitelist support.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "nodejs",
+    "proxy",
+    "seo",
+    "url-rewrite",
+    "cloner",
+    "subdomain",
+    "express"
+  ],
+  "author": "Nama Kamu",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.2",
+    "express": "^4.19.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
