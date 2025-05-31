@@ -1,17 +1,21 @@
-require('dotenv').config();
+// server.js
 const express = require('express');
-const app = express();
-const routes = require('./routes/proxy');
+const dotenv = require('dotenv');
+const proxyRoutes = require('./routes/proxy');
+const path = require('path');
 
+dotenv.config();
+
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(routes);
+// Static file handling (optional, if you serve custom assets)
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res) => res.status(404).send('Not Found'));
+// Routes
+app.use('/', proxyRoutes);
 
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).send('Internal Server Error');
+// Start server
+app.listen(PORT, () => {
+  console.log(`Proxy server running at http://localhost:${PORT}`);
 });
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
