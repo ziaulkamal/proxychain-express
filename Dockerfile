@@ -1,20 +1,20 @@
-# Gunakan image ringan Node.js Alpine
+# Gunakan base image Node.js 18 Alpine untuk image ringan
 FROM node:18-alpine
 
-# Set direktori kerja
+# Set working directory di dalam container
 WORKDIR /app
 
-# Salin file package.json & lock dulu untuk install dependensi
+# Copy file package.json dan package-lock.json ke container
 COPY package*.json ./
 
-# Install dependensi produksi
+# Install dependencies (termasuk devDependencies)
 RUN npm install
 
-# Salin seluruh source code ke container
+# Copy semua source code ke container
 COPY . .
 
-# Expose port (default Express)
+# Expose port yang akan digunakan (sesuaikan dengan env PORT)
 EXPOSE 3000
 
-# Jalankan server
+# Jalankan aplikasi
 CMD ["npm", "start"]
