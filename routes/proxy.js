@@ -1,33 +1,20 @@
-// routes/proxy.js
-
 const express = require('express');
 const router = express.Router();
-const dynamicSubdomainProxy = require('../middlewares/proxyMiddleware');
-const { HOST } = process.env;
+const proxyMiddleware = require('../middlewares/proxyMiddleware');
 const { fetchAndRewriteContent } = require('../services/contentFetchService');
 
-router.use(dynamicSubdomainProxy);
+const HOST = process.env.HOST;
 
-// Middleware utama untuk proxy ROOT_TARGET dan rewrite konten
+router.use(proxyMiddleware);
+
 router.use(async (req, res, next) => {
-  const host = req.headers.host || '';
-
-  if (host !== HOST) {
-    // Kalau bukan domain utama, lewati
-    return next();
-  }
+  if ((req.headers.host || '') !== HOST) return next();
 
   try {
-    // Gabungkan path + query string
     const fullPath = req.originalUrl || req.url;
-
-    // Fetch dan rewrite konten dari ROOT_TARGET
-    const rewrittenHtml = await fetchAndRewriteContent(fullPath);
-
-    // Kirim hasil ke client
-    res.send(rewrittenHtml);
-  } catch (error) {
-    console.error('[proxy.js] Error fetching content:', error.message);
+    const content = await fetchAndRewriteContent(fullPath);
+    res.send(content);
+  } catch (e) {
     res.status(502).send('Bad Gateway');
   }
 });

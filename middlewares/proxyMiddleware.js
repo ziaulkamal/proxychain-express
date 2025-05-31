@@ -1,71 +1,49 @@
-// middlewares/proxyMiddleware.js
-
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const { subdomainToDomain } = require('../services/urlService');
 const fs = require('fs');
 const path = require('path');
-const { subdomainToDomain } = require('../services/urlService');
 
-const HOST = process.env.HOST || 'ziadns.my.id';
-const WHITELIST_PATH = path.resolve(__dirname, '../static/whitelist.txt');
+const HOST = process.env.HOST;
+const ROOT_TARGET = process.env.ROOT_TARGET;
 
-let whitelistDomains = new Set();
+const whitelistPath = path.join(__dirname, '..', 'static', 'whitelist.txt');
+let whitelist = [];
 
-// Fungsi untuk load whitelist dari file
-function loadWhitelist() {
-  try {
-    const data = fs.readFileSync(WHITELIST_PATH, 'utf-8');
-    whitelistDomains = new Set(
-      data
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-    );
-    console.log('[proxyMiddleware] Whitelist domains loaded:', whitelistDomains);
-  } catch (err) {
-    console.warn('[proxyMiddleware] Gagal load whitelist:', err.message);
-  }
+try {
+  const data = fs.readFileSync(whitelistPath, 'utf-8');
+  whitelist = data.split('\n').map(d => d.trim()).filter(Boolean);
+} catch (err) {
+  console.error('Failed to load whitelist:', err);
 }
 
-// Load whitelist saat server start
-loadWhitelist();
+function isWhitelisted(domain) {
+  return whitelist.includes(domain);
+}
 
-function dynamicSubdomainProxy(req, res, next) {
-  const host = req.headers.host || '';
+const proxyMiddleware = createProxyMiddleware({
+  changeOrigin: true,
+  selfHandleResponse: false,
+  router: function(req) {
+    const host = req.headers.host || '';
+    if (!host.endsWith(HOST)) return ROOT_TARGET;
 
-  if (!host.endsWith(HOST)) return next();
+    // subdomain.ziadns.my.id
+    const subdomainPart = host.replace(`.${HOST}`, '');
+    if (!subdomainPart || subdomainPart === HOST) return ROOT_TARGET;
 
-  const subdomainPart = host.replace(`.${HOST}`, '');
+    // Transform subdomain to domain asli
+    const targetDomain = subdomainToDomain(subdomainPart);
 
-  // Kalau subdomain tidak ada tanda "-", artinya bukan subdomain proxy pattern
-  if (!subdomainPart.includes('-')) return next();
-
-  // Konversi subdomain "assets-suara-com" => "assets.suara.com"
-  const targetDomain = subdomainToDomain(subdomainPart);
-
-  // Cek whitelist, kalau domain ada di whitelist jangan proxy
-  if (whitelistDomains.has(targetDomain)) {
-    return next();
-  }
-
-  // Buat proxy middleware untuk domain target
-  const proxy = createProxyMiddleware({
-    target: `https://${targetDomain}`,
-    changeOrigin: true,
-    secure: true,
-    headers: {
-      host: targetDomain,
-    },
-    logLevel: 'warn',
-    onProxyReq(proxyReq, req, res) {
-      // Optional: kamu bisa modifikasi header di sini jika perlu
-    },
-    onError(err, req, res) {
-      console.error('[proxyMiddleware] Proxy error:', err.message);
-      res.status(502).send('Bad Gateway');
+    // Cek whitelist
+    if (isWhitelisted(targetDomain)) {
+      return `https://${targetDomain}`;
     }
-  });
 
-  return proxy(req, res, next);
-}
+    return `https://${targetDomain}`;
+  },
+  onProxyReq(proxyReq, req, res) {
+    proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Node.js Proxy)');
+  }
+});
 
-module.exports = dynamicSubdomainProxy;
+module.exports = proxyMiddleware;

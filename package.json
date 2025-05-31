@@ -7,17 +7,6 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": [
-    "nodejs",
-    "proxy",
-    "seo",
-    "url-rewrite",
-    "cloner",
-    "subdomain",
-    "express"
-  ],
-  "author": "Nama Kamu",
-  "license": "MIT",
   "dependencies": {
     "axios": "^1.4.0",
     "cheerio": "^1.0.0-rc.12",
